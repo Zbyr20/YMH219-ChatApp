@@ -43,7 +43,7 @@ namespace ChatServer
 
             _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();   // port kullanımdaysa SocketException fırlatır (form yakalar)
-            Port = port;
+            Port = ((IPEndPoint)_listener.LocalEndpoint).Port;   // port 0 verilirse işletim sisteminin seçtiği port
             IsRunning = true;
             Raise(RunningChanged);
             WriteLog("Sunucu başlatıldı. Port: " + port);
@@ -148,6 +148,7 @@ namespace ChatServer
                     return true;
 
                 case MessageType.Private:
+                    if (string.IsNullOrWhiteSpace(msg.Text)) return true;   // boş özel mesajı iletme
                     session.MessageCount++;
                     await HandlePrivateAsync(session, msg);
                     Raise(ClientsChanged);
