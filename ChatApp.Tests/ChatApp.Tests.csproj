@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    NuGet paketi kullanmayan küçük test projesi (xUnit/NUnit gerekmez).
+    Çalıştırma: depo kökünde "dotnet run" + project seçeneği ile ChatApp.Tests (README: Testler)
+    Sunucu ve istemcinin ağ kodu (ChatServerCore, ChatClientCore) Windows Forms'a bağlı
+    olmadığı için dosyaları buraya bağlantı (link) olarak eklenir; böylece testler
+    Windows dışında da (ör. GitHub Actions'ta Linux) çalışabilir.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>ChatApp.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChatCommon\ChatCommon.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ChatServer\ChatServerCore.cs" Link="Linked\ChatServerCore.cs" />
+    <Compile Include="..\ChatServer\ClientSession.cs" Link="Linked\ClientSession.cs" />
+    <Compile Include="..\ChatClient\ChatClientCore.cs" Link="Linked\ChatClientCore.cs" />
+  </ItemGroup>
+
+</Project>
