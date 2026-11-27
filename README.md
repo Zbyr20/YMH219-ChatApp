@@ -20,14 +20,18 @@ YMH219-ChatApp.sln
 ├── ChatCommon/    (sınıf kütüphanesi – iki tarafın ortak kodu)
 │   ├── ChatMessage.cs        mesaj modeli + Encode()/Decode() (protokol)
 │   ├── ChatProtocol.cs       varsayılan port, kullanıcı adı doğrulama
-│   └── MessageConnection.cs  TcpClient sarmalayıcı: ReadAsync(), SendAsync()
+│   └── MessageConnection.cs  TcpClient sarmalayıcı: ReadAsync(), SendAsync(), satır uzunluğu sınırı
 ├── ChatServer/    (Windows Forms)
 │   ├── ChatServerCore.cs     dinleme, istemci yönetimi, yayın (broadcast), özel mesaj
 │   ├── ClientSession.cs      bağlı istemci bilgisi (ad, adres, bağlanma zamanı, mesaj sayısı)
 │   └── ServerForm.cs         arayüz
-└── ChatClient/    (Windows Forms)
-    ├── ChatClientCore.cs     bağlanma, gönderme, dinleme döngüsü
-    └── ClientForm.cs         arayüz
+├── ChatClient/    (Windows Forms)
+│   ├── ChatClientCore.cs     bağlanma, gönderme, dinleme döngüsü
+│   └── ClientForm.cs         arayüz
+└── ChatApp.Tests/ (konsol – NuGet'siz test projesi)
+    ├── ProtocolTests.cs      Encode/Decode, kaçış karakterleri, kullanıcı adı kuralları
+    ├── ConnectionTests.cs    gerçek TCP soketiyle okuma/yazma, uzun satır sınırı
+    └── ServerTests.cs        sunucu + istemci uçtan uca (katılma, yayın, özel mesaj, atma…)
 ```
 
 ## Kurulum ve Çalıştırma
@@ -49,6 +53,8 @@ TUR|gönderen|alıcı|zaman(ticks)|metin
 ```
 
 Metindeki `|`, `\` ve satır sonları kaçış karakterleriyle (`\p`, `\\`, `\n`) kodlanır; böylece kullanıcı ne yazarsa yazsın protokol bozulmaz.
+
+Bir satır en fazla **65 536 karakter** (`ChatProtocol.MaxLineLength`) olabilir. Daha uzun bir satır gönderen (ya da hiç satır sonu göndermeyen) bağlantı "geçersiz mesaj" nedeniyle kapatılır; böylece tek bir kötü niyetli istemci sunucunun belleğini dolduramaz.
 
 | Tür | Yön | Anlamı |
 |---|---|---|
@@ -76,6 +82,19 @@ Metindeki `|`, `\` ve satır sonları kaçış karakterleriyle (`\p`, `\\`, `\n`
 - ✅ **Özel mesaj:** sağdaki listeden kullanıcı seçip yazın.
 - ✅ **Mesaj geçmişinin dosyaya kaydedilmesi** (hem sunucu hem istemci, `.txt`).
 
+## Testler
+
+`ChatApp.Tests` NuGet paketi gerektirmeyen küçük bir konsol test projesidir (32 test). Sunucu gerçekten `127.0.0.1` üzerinde rastgele bir portta başlatılır, istemciler TCP ile bağlanır. Ağ kodu Windows Forms'a bağlı olmadığı için testler Windows dışında da çalışır.
+
+```powershell
+dotnet run --project ChatApp.Tests           # hepsi
+dotnet run --project ChatApp.Tests -- Server # adında "Server" geçenler
+```
+
+Visual Studio'da: `ChatApp.Tests` projesine sağ tık → **Debug → Start New Instance**. Çıktının sonunda `32 passed, 0 failed` görünmelidir; başarısız test varsa çıkış kodu 1 olur.
+
+Testler, sunucunun gerçek çalışma ortamını taklit etmek için tek iş parçacıklı bir `SynchronizationContext` kullanır (Windows Forms'taki UI iş parçacığı gibi) – aşağıdaki "kilitsiz istemci listesi" notuna bakın.
+
 ## Ekran Görüntüleri
 
 | Sunucu | İstemci |
@@ -87,6 +106,8 @@ Metindeki `|`, `\` ve satır sonları kaçış karakterleriyle (`\p`, `\\`, `\n`
 - Mesajlar şifrelenmeden gönderilir (TLS yok); yalnızca yerel ağ/ders amaçlıdır.
 - Tek oda vardır; mesaj geçmişi sunucuda kalıcı veritabanında tutulmaz.
 - Sunucu `ChatServerCore.StartAsync`'i UI iş parçacığından çağırdığı için `await` sonrası kod yine UI iş parçacığında çalışır; bu sayede istemci listesi kilitsiz ve güvenli şekilde güncellenir.
+- Yayın (broadcast) istemcilere sırayla gönderilir; mesajlarını hiç okumayan bir istemcinin TCP tamponu dolarsa diğerlerine gönderim de bekler. Geliştirme fikri: her istemci için ayrı gönderim kuyruğu ya da yazma zaman aşımı.
+- Bağlanıp `Join` göndermeyen bir bağlantı için zaman aşımı yoktur (listede adsız olarak kalır).
 
 ## Öğrenci
 
