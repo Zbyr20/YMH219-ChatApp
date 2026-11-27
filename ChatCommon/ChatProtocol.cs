@@ -9,6 +9,14 @@ namespace ChatCommon
         public const int MaxUserNameLength = 20;
         public const int MaxMessageLength = 1000;
 
+        /// <summary>
+        /// Ağdan okunabilecek tek bir satırın (kodlanmış mesajın) en fazla karakter sayısı.
+        /// Normal bir mesaj bunun çok altındadır (1000 karakter metin, kaçışlarla en çok ~2000);
+        /// kullanıcı listesi için de bol pay bırakır. Sınır olmazsa satır sonu göndermeyen bir
+        /// istemci karşı tarafın belleğini sınırsızca doldurabilir.
+        /// </summary>
+        public const int MaxLineLength = 64 * 1024;
+
         /// <summary>Kullanıcı adı geçerliyse null, değilse hata açıklamasını döner.</summary>
         public static string ValidateUserName(string name)
         {
